@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "interrrp.lastdeath.mixins",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": ["DeathMixin"],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

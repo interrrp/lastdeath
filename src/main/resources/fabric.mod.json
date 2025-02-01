@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "lastdeath",
+  "version": "${version}",
+  "name": "LastDeath",
+  "description": "Easily travel to your last death",
+  "authors": ["interrrp"],
+  "contact": {
+    "sources": "https://github.com/interrrp/lastdeath"
+  },
+  "license": "GPL-3.0",
+  "icon": "assets/lastdeath/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["interrrp.lastdeath.LastDeathMod"]
+  },
+  "mixins": ["lastdeath.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}
