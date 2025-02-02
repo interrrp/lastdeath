@@ -10,30 +10,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.mojang.brigadier.Command;
 
-public class LastDeathMod implements ModInitializer {
+public final class LastDeathMod implements ModInitializer {
     public static final String MOD_ID = "lastdeath";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    public static final DeathStorage STORAGE = new DeathStorage();
+    public static DeathStorage STORAGE = new DeathStorage();
 
     @Override
     public void onInitialize() {
+        try {
+            STORAGE.load();
+        } catch (Exception exc) {
+            LOGGER.warn("Failed to load last deaths", exc);
+            LOGGER.warn("Previously stored death data was lost due to the above error");
+        }
+
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(CommandManager.literal("lastdeath").executes(context -> {
                 var player = context.getSource().getPlayer();
                 var name = player.getName().getString();
 
-                var deathInfo = STORAGE.getLastDeathInfo(name);
-                if (deathInfo == null) {
+                var lastDeath = STORAGE.getLastDeath(name);
+                if (lastDeath == null) {
+                    Feedback.error(player, "The server has not recorded your recent death.");
                     return -1;
                 }
-                var deathPos = deathInfo.pos();
+                var pos = lastDeath.pos();
 
                 ServerWorld world = player.server.getWorld(RegistryKey.of(
                         RegistryKey.ofRegistry(new Identifier("minecraft", "dimension")),
-                        new Identifier(deathInfo.world())));
+                        new Identifier(lastDeath.world())));
 
-                player.teleport(world, deathPos.getX(), deathPos.getY(), deathPos.getZ(),
-                        deathInfo.yaw(), deathInfo.pitch());
+                player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), lastDeath.yaw(),
+                        lastDeath.pitch());
                 return Command.SINGLE_SUCCESS;
             }));
         });
