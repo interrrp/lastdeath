@@ -15,14 +15,14 @@ import com.google.gson.reflect.TypeToken;
 /**
  * Handles persistent storage of death info.
  * 
- * Deaths are saved to a JSON file named `lastdeath.json` inside the `mods` folder.
+ * Deaths are saved to a JSON file named `lastdeath.json`.
  * 
  * @see #setLastDeath()
  * @see #getLastDeath()
  * @see #load()
  */
 public final class DeathStorage {
-    private static final Path FILE_PATH = Paths.get("mods", "lastdeath.json");
+    private static final Path FILE_PATH = Paths.get("lastdeath.json");
     private static final Type JSON_TYPE = new TypeToken<Map<String, DeathInfo>>() {}.getType();
 
     private final Gson gson = new Gson();
