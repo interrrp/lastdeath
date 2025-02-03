@@ -99,7 +99,7 @@ public final class DeathStorage {
         try {
             Files.createFile(FILE_PATH);
         } catch (IOException exc) {
-            throw new IOException(String.format("Failed to create %s"), exc);
+            throw new IOException(String.format("Failed to create %s", FILE_PATH), exc);
         }
     }
 }
