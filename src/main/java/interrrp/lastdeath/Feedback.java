@@ -15,9 +15,9 @@ public final class Feedback {
     }
 
     private static void sendColored(ServerPlayerEntity player, String message, int color) {
-        var textColor = TextColor.fromRgb(color);
-        var style = Style.EMPTY.withColor(textColor);
-        var text = Text.literal(message).setStyle(style);
+        final var textColor = TextColor.fromRgb(color);
+        final var style = Style.EMPTY.withColor(textColor);
+        final var text = Text.literal(message).setStyle(style);
         player.sendMessage(text);
     }
 }

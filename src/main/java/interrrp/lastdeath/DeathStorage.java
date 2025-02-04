@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -19,14 +20,19 @@ import com.google.gson.reflect.TypeToken;
  * 
  * @see #setLastDeath()
  * @see #getLastDeath()
- * @see #load()
+ * @see #loadFromDisk()
  */
 public final class DeathStorage {
     private static final Path FILE_PATH = Paths.get("lastdeath.json");
     private static final Type JSON_TYPE = new TypeToken<Map<String, DeathInfo>>() {}.getType();
 
+    private final Logger logger;
     private final Gson gson = new Gson();
     private final Map<String, DeathInfo> lastDeaths = new HashMap<>();
+
+    public DeathStorage(final Logger logger) {
+        this.logger = logger;
+    }
 
     /**
      * Sets the last death of a player and saves it to disk.
@@ -35,9 +41,9 @@ public final class DeathStorage {
      * @param deathInfo The info of the player's last death
      * @throws IOException When the file storing deaths cannot be written to
      */
-    public void setLastDeath(String username, DeathInfo deathInfo) throws IOException {
+    public void setLastDeath(final String username, final DeathInfo deathInfo) {
         lastDeaths.put(username, deathInfo);
-        save();
+        saveToDisk();
     }
 
     /**
@@ -47,7 +53,7 @@ public final class DeathStorage {
      * @return The {@link DeathInfo} associated with the player's last death, or null if no deaths
      *         have been recorded for the player yet
      */
-    public DeathInfo getLastDeath(String username) {
+    public DeathInfo getLastDeath(final String username) {
         return lastDeaths.get(username);
     }
 
@@ -57,49 +63,51 @@ public final class DeathStorage {
      * @throws IOException When the file storing deaths cannot be read
      * @throws JsonSyntaxException When the file storing deaths contains invalid JSON
      */
-    public void load() throws IOException, JsonSyntaxException {
+    public void loadFromDisk() {
         createFileIfNotExists();
         loadFromFile();
+        logger.info("Loaded {} death(s) from {}", lastDeaths.size(), FILE_PATH);
     }
 
-    private void loadFromFile() throws IOException, JsonSyntaxException {
+    private void loadFromFile() {
         try {
-            var json = Files.readString(FILE_PATH);
-            HashMap<String, DeathInfo> loaded = gson.fromJson(json, JSON_TYPE);
+            final var json = Files.readString(FILE_PATH);
+            Map<String, DeathInfo> loaded = gson.fromJson(json, JSON_TYPE);
             if (loaded != null) {
                 lastDeaths.clear();
                 lastDeaths.putAll(loaded);
             }
-        } catch (IOException exc) {
-            throw new IOException(String.format("Failed to read %s", FILE_PATH), exc);
-        } catch (JsonSyntaxException exc) {
-            throw new JsonSyntaxException(String.format("Malformed JSON at %s", FILE_PATH), exc);
+        } catch (IOException ioException) {
+            logger.error(String.format("Failed to read %s", FILE_PATH), ioException);
+        } catch (JsonSyntaxException jsonSyntaxException) {
+            logger.error(String.format("Malformed JSON in %s", FILE_PATH), jsonSyntaxException);
         }
     }
 
-    private void save() throws IOException {
+    private void saveToDisk() {
         createFileIfNotExists();
         writeToFile();
+        logger.info("Saved {} death(s) to {}", lastDeaths.size(), FILE_PATH);
     }
 
-    private void writeToFile() throws IOException {
+    private void writeToFile() {
         try {
-            var json = gson.toJson(lastDeaths);
+            final var json = gson.toJson(lastDeaths);
             Files.writeString(FILE_PATH, json, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException exc) {
-            throw new IOException(String.format("Failed to save deaths to %s", FILE_PATH), exc);
+        } catch (IOException ioException) {
+            logger.error(String.format("Failed to save deaths to %s", FILE_PATH), ioException);
         }
     }
 
-    private void createFileIfNotExists() throws IOException {
+    private void createFileIfNotExists() {
         if (Files.exists(FILE_PATH))
             return;
 
-        LastDeathMod.LOGGER.info("Creating {} as it does not exist yet", FILE_PATH);
+        logger.info("Creating {} as it does not exist yet", FILE_PATH);
         try {
             Files.createFile(FILE_PATH);
-        } catch (IOException exc) {
-            throw new IOException(String.format("Failed to create %s", FILE_PATH), exc);
+        } catch (IOException ioException) {
+            logger.error(String.format("Failed to create %s", FILE_PATH), ioException);
         }
     }
 }
