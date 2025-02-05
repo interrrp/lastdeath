@@ -27,10 +27,16 @@ public final class DeathListener {
         final var playerName = player.getName().getString();
 
         logger.info("Saving death of {}", playerName);
-        Feedback.info(player, "Your death has been recorded.");
-        Feedback.info(player, "Do /lastdeath to teleport to your death location.");
-
         final var deathInfo = DeathInfo.fromPlayer(player);
-        storage.setLastDeath(playerName, deathInfo);
+
+        boolean saveSuccessful = storage.setLastDeath(playerName, deathInfo);
+        if (saveSuccessful) {
+            Feedback.info(player, "Your death has been recorded.");
+            Feedback.info(player, "Do /lastdeath to teleport to your death location.");
+        } else {
+            Feedback.error(player,
+                    "Failed to save your death location. It may not persist after a restart.");
+            Feedback.info(player, "You can still use /lastdeath for now.");
+        }
     }
 }

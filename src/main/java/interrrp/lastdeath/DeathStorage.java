@@ -13,15 +13,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-/**
- * Handles persistent storage of death info.
- * 
- * Deaths are saved to a JSON file named `lastdeath.json`.
- * 
- * @see #setLastDeath()
- * @see #getLastDeath()
- * @see #loadFromDisk()
- */
 public final class DeathStorage {
     private static final Path FILE_PATH = Paths.get("lastdeath.json");
     private static final Type JSON_TYPE = new TypeToken<Map<String, DeathInfo>>() {}.getType();
@@ -34,35 +25,15 @@ public final class DeathStorage {
         this.logger = logger;
     }
 
-    /**
-     * Sets the last death of a player and saves it to disk.
-     * 
-     * @param username The username of the player
-     * @param deathInfo The info of the player's last death
-     * @throws IOException When the file storing deaths cannot be written to
-     */
-    public void setLastDeath(final String username, final DeathInfo deathInfo) {
+    public boolean setLastDeath(final String username, final DeathInfo deathInfo) {
         lastDeaths.put(username, deathInfo);
-        saveToDisk();
+        return saveToDisk();
     }
 
-    /**
-     * Returns the info of a player's last death.
-     * 
-     * @param username The username of the player
-     * @return The {@link DeathInfo} associated with the player's last death, or null if no deaths
-     *         have been recorded for the player yet
-     */
     public DeathInfo getLastDeath(final String username) {
         return lastDeaths.get(username);
     }
 
-    /**
-     * Loads death storages from disk.
-     * 
-     * @throws IOException When the file storing deaths cannot be read
-     * @throws JsonSyntaxException When the file storing deaths contains invalid JSON
-     */
     public void loadFromDisk() {
         createFileIfNotExists();
         loadFromFile();
@@ -72,7 +43,7 @@ public final class DeathStorage {
     private void loadFromFile() {
         try {
             final var json = Files.readString(FILE_PATH);
-            Map<String, DeathInfo> loaded = gson.fromJson(json, JSON_TYPE);
+            final Map<String, DeathInfo> loaded = gson.fromJson(json, JSON_TYPE);
             if (loaded != null) {
                 lastDeaths.clear();
                 lastDeaths.putAll(loaded);
@@ -84,30 +55,36 @@ public final class DeathStorage {
         }
     }
 
-    private void saveToDisk() {
-        createFileIfNotExists();
-        writeToFile();
-        logger.info("Saved {} death(s) to {}", lastDeaths.size(), FILE_PATH);
+    private boolean saveToDisk() {
+        if (!createFileIfNotExists()) {
+            return false;
+        }
+        return writeToFile();
     }
 
-    private void writeToFile() {
+    private boolean writeToFile() {
         try {
             final var json = gson.toJson(lastDeaths);
             Files.writeString(FILE_PATH, json, StandardOpenOption.TRUNCATE_EXISTING);
+            return true;
         } catch (IOException ioException) {
             logger.error(String.format("Failed to save deaths to %s", FILE_PATH), ioException);
+            return false;
         }
     }
 
-    private void createFileIfNotExists() {
-        if (Files.exists(FILE_PATH))
-            return;
+    private boolean createFileIfNotExists() {
+        if (Files.exists(FILE_PATH)) {
+            return true;
+        }
 
         logger.info("Creating {} as it does not exist yet", FILE_PATH);
         try {
             Files.createFile(FILE_PATH);
+            return true;
         } catch (IOException ioException) {
             logger.error(String.format("Failed to create %s", FILE_PATH), ioException);
+            return false;
         }
     }
 }
