@@ -1,11 +1,17 @@
 package interrrp.lastdeath;
 
 import org.slf4j.Logger;
+import interrrp.lastdeath.storage.DeathStorage;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
+/**
+ * An event listener to save deaths to a {@link DeathStorage} when players die.
+ * 
+ * @see #register()
+ */
 public final class DeathListener {
     private final Logger logger;
     private final DeathStorage storage;
@@ -15,6 +21,9 @@ public final class DeathListener {
         this.storage = storage;
     }
 
+    /**
+     * Register the {@link ServerLivingEntityEvents.AfterDeath} event.
+     */
     public void register() {
         ServerLivingEntityEvents.AFTER_DEATH.register(this::onEntityDeath);
     }
@@ -26,10 +35,11 @@ public final class DeathListener {
         final var player = (ServerPlayerEntity) entity;
         final var playerName = player.getName().getString();
 
-        logger.info("Saving death of {}", playerName);
         final var deathInfo = DeathInfo.fromPlayer(player);
+        storage.setLastDeathOf(playerName, deathInfo);
 
-        boolean saveSuccessful = storage.setLastDeath(playerName, deathInfo);
+        logger.info("Saving death of {}", playerName);
+        final var saveSuccessful = storage.saveToPersistentStorage();
         if (saveSuccessful) {
             Feedback.info(player, "Your death has been recorded.");
             Feedback.info(player, "Do /lastdeath to teleport to your death location.");

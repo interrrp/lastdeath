@@ -2,6 +2,7 @@ package interrrp.lastdeath;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
+import interrrp.lastdeath.storage.DeathStorage;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -12,6 +13,11 @@ import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import static net.minecraft.server.command.CommandManager.literal;
 
+/**
+ * A server command to teleport players to their last death.
+ * 
+ * @see #register()
+ */
 public final class LastDeathCommand {
     private static final int SUCCESS = 1;
     private static final int FAILURE = -1;
@@ -41,7 +47,7 @@ public final class LastDeathCommand {
         }
         final var playerName = player.getName().getString();
 
-        final var lastDeath = storage.getLastDeath(playerName);
+        final var lastDeath = storage.getLastDeathOf(playerName);
         if (lastDeath == null) {
             Feedback.error(player, "Your last death has not been recorded.");
             return FAILURE;
